@@ -1,5 +1,8 @@
 Meteor.methods({
-	'livechat:getInitialData'(visitorToken) {
+	'livechat:getInitialData'(args) {
+		const visitorToken = args.token;
+		const clientLanguage = args.language;
+
 		const info = {
 			enabled: null,
 			title: null,
@@ -35,7 +38,7 @@ Meteor.methods({
 			info.room = room[0];
 		}
 
-		const initSettings = RocketChat.Livechat.getInitSettings();
+		const initSettings = RocketChat.Livechat.getInitSettings(clientLanguage);
 
 		info.title = initSettings.Livechat_title;
 		info.color = initSettings.Livechat_title_color;
@@ -48,7 +51,7 @@ Meteor.methods({
 		info.offlineSuccessMessage = initSettings.Livechat_offline_success_message;
 		info.offlineUnavailableMessage = initSettings.Livechat_offline_form_unavailable;
 		info.displayOfflineForm = initSettings.Livechat_display_offline_form;
-		info.language = initSettings.Language;
+		info.language = clientLanguage || initSettings.Language;
 		info.videoCall = initSettings.Livechat_videocall_enabled === true && initSettings.Jitsi_Enabled === true;
 		info.transcript = initSettings.Livechat_enable_transcript;
 		info.transcriptMessage = initSettings.Livechat_transcript_message;

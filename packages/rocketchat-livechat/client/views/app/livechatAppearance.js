@@ -4,8 +4,12 @@ import moment from 'moment';
 import toastr from 'toastr';
 
 const LivechatAppearance = new Mongo.Collection('livechatAppearance');
+const LivechatAppearanceTexts = new Mongo.Collection('livechatAppearanceTexts');
 
 Template.livechatAppearance.helpers({
+	chosenLanguage() {
+		return Template.instance().chosenLanguage.get();
+	},
 	previewState() {
 		return Template.instance().previewState.get();
 	},
@@ -63,7 +67,7 @@ Template.livechatAppearance.helpers({
 		return Template.instance().offlineUnavailableMessage.get().replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br>$2');
 	},
 	emailOffline() {
-		return Template.instance().offlineEmail.get();
+		return Template.instance().emailOffline.get();
 	},
 	sampleColor() {
 		if (Template.instance().previewState.get().indexOf('offline') !== -1) {
@@ -144,13 +148,29 @@ Template.livechatAppearance.helpers({
 				}
 			]
 		};
+	},
+	languages() {
+		const languages = TAPi18n.getLanguages();
+
+		let result = Object.keys(languages).map(key => {
+			const language = languages[key];
+			return _.extend(language, {key});
+		});
+
+		result = _.sortBy(result, 'key');
+		return result;
+	},
+	defaultLanguage(key) {
+		return 'en' === key;
 	}
 });
 
 Template.livechatAppearance.onCreated(function() {
 	this.subscribe('livechat:appearance');
+	this.subscribe('livechat:appearancetexts');
 
 	this.previewState = new ReactiveVar('opened');
+	this.chosenLanguage = new ReactiveVar('en');
 
 	this.title = new ReactiveVar(null);
 	this.color = new ReactiveVar(null);
@@ -161,11 +181,11 @@ Template.livechatAppearance.onCreated(function() {
 	this.offlineSuccessMessage = new ReactiveVar(null);
 	this.titleOffline = new ReactiveVar(null);
 	this.colorOffline = new ReactiveVar(null);
-	this.offlineEmail = new ReactiveVar(null);
+	this.emailOffline = new ReactiveVar(null);
 
 	this.autorun(() => {
-		const setting = LivechatAppearance.findOne('Livechat_title');
-		this.title.set(setting && setting.value);
+		const setting = LivechatAppearanceTexts.findOne({identifier: 'Livechat_title', lang: this.chosenLanguage.get()});
+		this.title.set(setting && setting.text);
 	});
 	this.autorun(() => {
 		const setting = LivechatAppearance.findOne('Livechat_title_color');
@@ -176,20 +196,20 @@ Template.livechatAppearance.onCreated(function() {
 		this.displayOfflineForm.set(setting && setting.value);
 	});
 	this.autorun(() => {
-		const setting = LivechatAppearance.findOne('Livechat_offline_form_unavailable');
-		this.offlineUnavailableMessage.set(setting && setting.value);
+		const setting = LivechatAppearanceTexts.findOne({identifier: 'Livechat_offline_form_unavailable', lang: this.chosenLanguage.get()});
+		this.offlineUnavailableMessage.set(setting && setting.text);
 	});
 	this.autorun(() => {
-		const setting = LivechatAppearance.findOne('Livechat_offline_message');
-		this.offlineMessage.set(setting && setting.value);
+		const setting = LivechatAppearanceTexts.findOne({identifier: 'Livechat_offline_message', lang: this.chosenLanguage.get()});
+		this.offlineMessage.set(setting && setting.text);
 	});
 	this.autorun(() => {
-		const setting = LivechatAppearance.findOne('Livechat_offline_success_message');
-		this.offlineSuccessMessage.set(setting && setting.value);
+		const setting = LivechatAppearanceTexts.findOne({identifier: 'Livechat_offline_success_message', lang: this.chosenLanguage.get()});
+		this.offlineSuccessMessage.set(setting && setting.text);
 	});
 	this.autorun(() => {
-		const setting = LivechatAppearance.findOne('Livechat_offline_title');
-		this.titleOffline.set(setting && setting.value);
+		const setting = LivechatAppearanceTexts.findOne({identifier: 'Livechat_offline_title', lang: this.chosenLanguage.get()});
+		this.titleOffline.set(setting && setting.text);
 	});
 	this.autorun(() => {
 		const setting = LivechatAppearance.findOne('Livechat_offline_title_color');
@@ -197,7 +217,7 @@ Template.livechatAppearance.onCreated(function() {
 	});
 	this.autorun(() => {
 		const setting = LivechatAppearance.findOne('Livechat_offline_email');
-		this.offlineEmail.set(setting && setting.value);
+		this.emailOffline.set(setting && setting.value);
 	});
 });
 
@@ -212,11 +232,14 @@ Template.livechatAppearance.events({
 		}
 		instance[e.currentTarget.name].set(value);
 	},
+	'change #language, keyup #language'(e, instance) {
+		instance.chosenLanguage.set(e.currentTarget.value);
+	},
 	'click .reset-settings'(e, instance) {
 		e.preventDefault();
 
-		const settingTitle = LivechatAppearance.findOne('Livechat_title');
-		instance.title.set(settingTitle && settingTitle.value);
+		const settingTitle = LivechatAppearanceTexts.findOne({identifier: 'Livechat_title', lang: instance.chosenLanguage.get()});
+		instance.title.set(settingTitle && settingTitle.text);
 
 		const settingTitleColor = LivechatAppearance.findOne('Livechat_title_color');
 		instance.color.set(settingTitleColor && settingTitleColor.value);
@@ -224,29 +247,28 @@ Template.livechatAppearance.events({
 		const settingDiplayOffline = LivechatAppearance.findOne('Livechat_display_offline_form');
 		instance.displayOfflineForm.set(settingDiplayOffline && settingDiplayOffline.value);
 
-		const settingFormUnavailable = LivechatAppearance.findOne('Livechat_offline_form_unavailable');
-		instance.offlineUnavailableMessage.set(settingFormUnavailable && settingFormUnavailable.value);
+		const settingFormUnavailable = LivechatAppearanceTexts.findOne({identifier: 'Livechat_offline_form_unavailable', lang: instance.chosenLanguage.get()});
+		instance.offlineUnavailableMessage.set(settingFormUnavailable && settingFormUnavailable.text);
 
-		const settingOfflineMessage = LivechatAppearance.findOne('Livechat_offline_message');
-		instance.offlineMessage.set(settingOfflineMessage && settingOfflineMessage.value);
+		const settingOfflineMessage = LivechatAppearanceTexts.findOne({identifier: 'Livechat_offline_message', lang: instance.chosenLanguage.get()});
+		instance.offlineMessage.set(settingOfflineMessage && settingOfflineMessage.text);
 
-		const settingOfflineSuccess = LivechatAppearance.findOne('Livechat_offline_success_message');
-		instance.offlineSuccessMessage.set(settingOfflineSuccess && settingOfflineSuccess.value);
+		const settingOfflineSuccess = LivechatAppearanceTexts.findOne({identifier: 'Livechat_offline_success_message', lang: instance.chosenLanguage.get()});
+		instance.offlineSuccessMessage.set(settingOfflineSuccess && settingOfflineSuccess.text);
 
-		const settingOfflineTitle = LivechatAppearance.findOne('Livechat_offline_title');
-		instance.titleOffline.set(settingOfflineTitle && settingOfflineTitle.value);
+		const settingOfflineTitle = LivechatAppearanceTexts.findOne({identifier: 'Livechat_offline_title', lang: instance.chosenLanguage.get()});
+		instance.titleOffline.set(settingOfflineTitle && settingOfflineTitle.text);
 
 		const settingOfflineTitleColor = LivechatAppearance.findOne('Livechat_offline_title_color');
 		instance.colorOffline.set(settingOfflineTitleColor && settingOfflineTitleColor.value);
+
+		const settingEmailOffline = LivechatAppearance.findOne('Livechat_offline_email');
+		instance.emailOffline.set(settingEmailOffline && settingEmailOffline.value);
 	},
 	'submit .rocket-form'(e, instance) {
 		e.preventDefault();
 
-		const settings = [
-			{
-				_id: 'Livechat_title',
-				value: _.trim(instance.title.get())
-			},
+		const settingsAppearance = [
 			{
 				_id: 'Livechat_title_color',
 				value: instance.color.get()
@@ -254,22 +276,6 @@ Template.livechatAppearance.events({
 			{
 				_id: 'Livechat_display_offline_form',
 				value: instance.displayOfflineForm.get()
-			},
-			{
-				_id: 'Livechat_offline_form_unavailable',
-				value: _.trim(instance.offlineUnavailableMessage.get())
-			},
-			{
-				_id: 'Livechat_offline_message',
-				value: _.trim(instance.offlineMessage.get())
-			},
-			{
-				_id: 'Livechat_offline_success_message',
-				value: _.trim(instance.offlineSuccessMessage.get())
-			},
-			{
-				_id: 'Livechat_offline_title',
-				value: _.trim(instance.titleOffline.get())
 			},
 			{
 				_id: 'Livechat_offline_title_color',
@@ -281,11 +287,46 @@ Template.livechatAppearance.events({
 			}
 		];
 
-		Meteor.call('livechat:saveAppearance', settings, (err/*, success*/) => {
+		const settingTexts = [
+			{
+				identifier: 'Livechat_title',
+				lang: instance.chosenLanguage.get(),
+				text: _.trim(instance.title.get())
+			},
+			{
+				identifier: 'Livechat_offline_form_unavailable',
+				lang: instance.chosenLanguage.get(),
+				text: _.trim(instance.offlineUnavailableMessage.get())
+			},
+			{
+				identifier: 'Livechat_offline_message',
+				lang: instance.chosenLanguage.get(),
+				text: _.trim(instance.offlineMessage.get())
+			},
+			{
+				identifier: 'Livechat_offline_success_message',
+				lang: instance.chosenLanguage.get(),
+				text: _.trim(instance.offlineSuccessMessage.get())
+			},
+			{
+				identifier: 'Livechat_offline_title',
+				lang: instance.chosenLanguage.get(),
+				text: _.trim(instance.titleOffline.get())
+			}
+		];
+
+		Meteor.call('livechat:saveAppearance', settingsAppearance, (err/*, success*/) => {
 			if (err) {
 				return handleError(err);
 			}
-			toastr.success(t('Settings_updated'));
+
+			// chain with localized texts
+			Meteor.call('livechat:saveAppearanceTexts', settingTexts, (err/*, success*/) => {
+				if (err) {
+					return handleError(err);
+				}
+				toastr.success(t('Settings_updated'));
+			});
 		});
 	}
 });

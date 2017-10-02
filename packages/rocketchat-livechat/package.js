@@ -139,6 +139,7 @@ Package.onUse(function(api) {
 	api.addFiles('server/methods/getCustomFields.js', 'server');
 	api.addFiles('server/methods/getAgentData.js', 'server');
 	api.addFiles('server/methods/getInitialData.js', 'server');
+	api.addFiles('server/methods/getTextsTranslation.js', 'server');
 	api.addFiles('server/methods/loginByToken.js', 'server');
 	api.addFiles('server/methods/pageVisited.js', 'server');
 	api.addFiles('server/methods/registerGuest.js', 'server');
@@ -148,6 +149,7 @@ Package.onUse(function(api) {
 	api.addFiles('server/methods/removeManager.js', 'server');
 	api.addFiles('server/methods/removeTrigger.js', 'server');
 	api.addFiles('server/methods/saveAppearance.js', 'server');
+	api.addFiles('server/methods/saveAppearanceTexts.js', 'server');
 	api.addFiles('server/methods/saveCustomField.js', 'server');
 	api.addFiles('server/methods/saveDepartment.js', 'server');
 	api.addFiles('server/methods/saveInfo.js', 'server');
@@ -194,6 +196,7 @@ Package.onUse(function(api) {
 	api.addFiles('server/publications/externalMessages.js', 'server');
 	api.addFiles('server/publications/livechatAgents.js', 'server');
 	api.addFiles('server/publications/livechatAppearance.js', 'server');
+	api.addFiles('server/publications/livechatAppearanceTexts.js', 'server');
 	api.addFiles('server/publications/livechatDepartments.js', 'server');
 	api.addFiles('server/publications/livechatIntegration.js', 'server');
 	api.addFiles('server/publications/livechatManagers.js', 'server');

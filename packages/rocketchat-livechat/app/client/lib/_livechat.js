@@ -2,6 +2,7 @@ this.Livechat = new (class Livechat {
 	constructor() {
 		this._online = new ReactiveVar(null);
 
+		this._language = new ReactiveVar('en');
 		this._customColor = new ReactiveVar();
 		this._onlineColor = new ReactiveVar('#C1272D');
 		this._offlineColor = new ReactiveVar('#666666');
@@ -71,6 +72,9 @@ this.Livechat = new (class Livechat {
 	get title() {
 		return this._title.get();
 	}
+	get language() {
+		return this._language.get();
+	}
 	get registrationForm() {
 		return this._registrationForm.get();
 	}
@@ -113,6 +117,9 @@ this.Livechat = new (class Livechat {
 	}
 	set title(value) {
 		this._title.set(value);
+	}
+	set language(value) {
+		this._language.set(value);
 	}
 	set registrationForm(value) {
 		this._registrationForm.set(value);

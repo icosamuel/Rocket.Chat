@@ -228,29 +228,44 @@ RocketChat.Livechat = {
 		return true;
 	},
 
-	getInitSettings() {
-		const settings = {};
+	getInitSettings(lang) {
+		const settings = { ...RocketChat.Livechat.getTextsTranslation(lang) };
 
 		RocketChat.models.Settings.findNotHiddenPublic([
-			'Livechat_title',
 			'Livechat_title_color',
 			'Livechat_enabled',
 			'Livechat_show_agent_email',
 			'Livechat_registration_form',
 			'Livechat_allow_switching_departments',
-			'Livechat_offline_title',
 			'Livechat_offline_title_color',
-			'Livechat_offline_message',
-			'Livechat_offline_success_message',
-			'Livechat_offline_form_unavailable',
 			'Livechat_display_offline_form',
 			'Livechat_videocall_enabled',
 			'Jitsi_Enabled',
-			'Language',
 			'Livechat_enable_transcript',
 			'Livechat_transcript_message'
 		]).forEach((setting) => {
 			settings[setting._id] = setting.value;
+		});
+
+		return settings;
+	},
+
+	getTextsTranslation(lang) {
+		const settings = {Language: lang};
+
+		RocketChat.models.LivechatTexts.find({
+			lang,
+			identifier: {
+				$in: [
+					'Livechat_title',
+					'Livechat_offline_title',
+					'Livechat_offline_message',
+					'Livechat_offline_success_message',
+					'Livechat_offline_form_unavailable'
+				]
+			}
+		}).forEach((setting) => {
+			settings[setting.identifier] = setting.text;
 		});
 
 		return settings;
