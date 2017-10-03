@@ -6,6 +6,7 @@ Meteor.methods({
 
 		const validSettings = [
 			'Livechat_title_color',
+			'Livechat_show_agent_email',
 			'Livechat_display_offline_form',
 			'Livechat_offline_title_color',
 			'Livechat_offline_email'

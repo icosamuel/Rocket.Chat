@@ -11,6 +11,7 @@ Meteor.publish('livechat:appearance', function() {
 		_id: {
 			$in: [
 				'Livechat_title_color',
+				'Livechat_show_agent_email',
 				'Livechat_display_offline_form',
 				'Livechat_offline_title_color',
 				'Livechat_offline_email'
