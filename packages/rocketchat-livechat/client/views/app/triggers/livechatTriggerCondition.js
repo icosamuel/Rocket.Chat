@@ -16,6 +16,20 @@ Template.livechatTriggerCondition.helpers({
 		if (this.name === condition) {
 			return this.value;
 		}
+	},
+	languages() {
+		const languages = TAPi18n.getLanguages();
+
+		let result = Object.keys(languages).map(key => {
+			const language = languages[key];
+			return _.extend(language, {key});
+		});
+
+		result = _.sortBy(result, 'key');
+		return result;
+	},
+	defaultLanguage(key) {
+		return 'en' === key;
 	}
 });
 
