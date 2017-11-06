@@ -3,6 +3,7 @@ this.Triggers = (function() {
 	let initiated = false;
 	let requests = [];
 	let enabled = true;
+	let language = 'en';
 
 	const fire = function(trigger) {
 		if (!enabled || Meteor.userId()) {
@@ -42,24 +43,40 @@ this.Triggers = (function() {
 			if (trigger.skip) {
 				return;
 			}
+			let validationToken = true;
+			let delayTime = 0;
 			trigger.conditions.forEach(function(condition) {
 				switch (condition.name) {
 					case 'page-url':
-						if (request.location.href.match(new RegExp(condition.value))) {
-							fire(trigger);
+						if (request.location.href.match(new RegExp(condition.value)) == null) {
+							validationToken = false;
+						}
+						break;
+
+					case 'language':
+						if (language !== condition.value) {
+							validationToken = false;
 						}
 						break;
 
 					case 'time-on-site':
-						if (trigger.timeout) {
-							clearTimeout(trigger.timeout);
-						}
-						trigger.timeout = setTimeout(function() {
-							fire(trigger);
-						}, parseInt(condition.value) * 1000);
+						delayTime = condition.value;
 						break;
 				}
 			});
+
+			if (validationToken) {
+				if (trigger.timeout) {
+					clearTimeout(trigger.timeout);
+				}
+				if (delayTime > 0) {
+					trigger.timeout = setTimeout(function() {
+						fire(trigger);
+					}, parseInt(delayTime) * 1000);
+				} else {
+					fire(trigger);
+				}
+			}
 		});
 	};
 
@@ -67,8 +84,9 @@ this.Triggers = (function() {
 		triggers = newTriggers;
 	};
 
-	const init = function() {
+	const init = function(lang = 'en') {
 		initiated = true;
+		language = lang;
 
 		if (requests.length > 0 && triggers.length > 0) {
 			requests.forEach(function(request) {
