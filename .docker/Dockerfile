@@ -1,4 +1,4 @@
-FROM rocketchat/base:4
+FROM rocketchat/base:8
 
 # needs a mongoinstance - defaults to container linking with alias 'mongo'
 ENV DEPLOY_METHOD=docker \
