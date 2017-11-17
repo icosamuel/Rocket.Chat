@@ -3,7 +3,6 @@ this.Triggers = (function() {
 	let initiated = false;
 	let requests = [];
 	let enabled = true;
-	let language = 'en';
 
 	const fire = function(trigger) {
 		if (!enabled || Meteor.userId()) {
@@ -43,40 +42,44 @@ this.Triggers = (function() {
 			if (trigger.skip) {
 				return;
 			}
-			let validationToken = true;
-			let delayTime = 0;
+
+			let triggerConditions = {
+				pageUrl: null,
+				language: null,
+				timeOnSite: 1
+			};
 			trigger.conditions.forEach(function(condition) {
 				switch (condition.name) {
 					case 'page-url':
-						if (request.location.href.match(new RegExp(condition.value)) == null) {
-							validationToken = false;
-						}
+						triggerConditions.pageUrl = condition.value;
 						break;
 
 					case 'language':
-						if (language !== condition.value) {
-							validationToken = false;
-						}
+						triggerConditions.language = condition.value;
 						break;
 
 					case 'time-on-site':
-						delayTime = condition.value;
+						triggerConditions.timeOnSite = Math.max(condition.value, 1);
 						break;
 				}
 			});
 
-			if (validationToken) {
+			// test for url first, because it does not change with time
+			if (triggerConditions.pageUrl === null || request.location.href.match(new RegExp(triggerConditions.pageUrl)) !== null) {
 				if (trigger.timeout) {
 					clearTimeout(trigger.timeout);
 				}
-				if (delayTime > 0) {
-					trigger.timeout = setTimeout(function() {
+
+				// set the timer (minimum of a second before triggering)
+				trigger.timeout = setTimeout(function() {
+					// test for language at this time because it can change asynchronously
+					const language = Livechat.language.split('-').shift();
+					if (triggerConditions.language === null || triggerConditions.language === language){
 						fire(trigger);
-					}, parseInt(delayTime) * 1000);
-				} else {
-					fire(trigger);
-				}
+					}
+				}, parseInt(triggerConditions.timeOnSite) * 1000);
 			}
+
 		});
 	};
 
@@ -84,9 +87,8 @@ this.Triggers = (function() {
 		triggers = newTriggers;
 	};
 
-	const init = function(lang = 'en') {
+	const init = function() {
 		initiated = true;
-		language = lang;
 
 		if (requests.length > 0 && triggers.length > 0) {
 			requests.forEach(function(request) {

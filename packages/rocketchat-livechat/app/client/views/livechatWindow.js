@@ -135,7 +135,7 @@ Template.livechatWindow.onCreated(function() {
 				TAPi18n.setLanguage(language);
 				
 				Triggers.setTriggers(result.triggers);
-				Triggers.init(language);
+				Triggers.init();
 
 				result.departments.forEach((department) => {
 					Department.insert(department);
